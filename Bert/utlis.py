@@ -4,7 +4,7 @@ import torch
 
 from keras_preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
-from transformers import BertTokenizer
+from pytorch_pretrained_bert import BertTokenizer
 
 from tqdm import trange
 

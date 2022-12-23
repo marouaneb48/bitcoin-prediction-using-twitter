@@ -7,7 +7,7 @@ from sklearn.metrics import matthews_corrcoef
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from keras_preprocessing.sequence import pad_sequences
-from transformers import BertAdam, BertForSequenceClassification
+from pytorch_pretrained_bert import BertAdam, BertForSequenceClassification
 from tqdm import trange
 
 import numpy as np
@@ -22,12 +22,12 @@ def flat_accuracy(preds, labels):
 
 class bert_1layer():
 
-    def __init__(self,batch_size=32,epochs = 4,load_path=False):
+    def __init__(self,batch_size=32,epochs = 4):
 
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Load BertForSequenceClassification, the pretrained BERT model with a single linear classification layer on top. 
-        self.model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+        self.model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
         self.model.to('cuda')
         #model.cuda() # print the architecture of the model
 
@@ -53,8 +53,6 @@ class bert_1layer():
         self.optimizer = BertAdam(self.optimizer_grouped_parameters,
                             lr=2e-5,
                             warmup=.1)
-
-        self.model.load_state_dict(torch.load(load_path))
 
 
 
