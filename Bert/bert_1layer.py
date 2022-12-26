@@ -22,13 +22,17 @@ def flat_accuracy(preds, labels):
 
 class bert_1layer():
 
-    def __init__(self,batch_size=32,epochs = 4):
+    def __init__(self,batch_size=32,epochs = 4,load_path=False):
 
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Load BertForSequenceClassification, the pretrained BERT model with a single linear classification layer on top. 
-        self.model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
-        self.model.to('cuda')
+        if load_path==False:
+            self.model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)
+            self.model.to('cuda')
+        else:
+            self.model = torch.load(load_path,map_location ='cpu')
+        
         #model.cuda() # print the architecture of the model
 
 
@@ -200,6 +204,47 @@ class bert_1layer():
         flat_true_labels = [item for sublist in true_labels for item in sublist]
 
         print(matthews_corrcoef(flat_true_labels, flat_predictions))
+
+    def predict(self,data):
+        prediction_inputs, prediction_masks = preprocess(data)
+
+        prediction_data = TensorDataset(prediction_inputs, prediction_masks)
+        prediction_sampler = SequentialSampler(prediction_data)
+        prediction_dataloader = DataLoader(prediction_data, sampler=prediction_sampler, batch_size=self.batch_size)
+
+
+        # Prediction on test set
+
+        # Put model in evaluation mode
+        self.model.eval()
+
+        # Tracking variables 
+        predictions = []
+
+
+        # Predict 
+        for batch in prediction_dataloader:
+            # Add batch to GPU
+            batch = tuple(t.to(self.device) for t in batch)
+            # Unpack the inputs from our dataloader
+            b_input_ids, b_input_mask = batch
+            # Telling the model not to compute or store gradients, saving memory and speeding up prediction
+            with torch.no_grad():
+                # Forward pass, calculate logit predictions
+                logits = self.model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask)
+
+            # Move logits and labels to CPU
+            logits = logits.detach().cpu().numpy()
+    
+            
+            # Store predictions and true labels
+            predictions.append(logits)
+
+        flat_predictions = [item for sublist in predictions for item in sublist]
+        flat_predictions = np.argmax(flat_predictions, axis=1).flatten()
+
+        return flat_predictions
+
 
 
 

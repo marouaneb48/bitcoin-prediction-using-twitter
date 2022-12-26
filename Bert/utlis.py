@@ -101,3 +101,36 @@ def preprocess_test(df):
     prediction_labels = torch.tensor(labels)
 
     return prediction_inputs, prediction_masks, prediction_labels
+
+def preprocess(df):
+
+    # Create sentence and label lists
+    sentences = df.sentence.values
+
+    # We need to add special tokens at the beginning and end of each sentence for BERT to work properly
+    sentences = ["[CLS] " + sentence + " [SEP]" for sentence in sentences]
+
+
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+    tokenized_texts = [tokenizer.tokenize(sent) for sent in sentences]
+
+
+    MAX_LEN = 128
+
+    # Use the BERT tokenizer to convert the tokens to their index numbers in the BERT vocabulary
+    input_ids = [tokenizer.convert_tokens_to_ids(x) for x in tokenized_texts]
+    # Pad our input tokens
+    input_ids = pad_sequences(input_ids, maxlen=MAX_LEN, dtype="long", truncating="post", padding="post")
+    # Create attention masks
+    attention_masks = []
+
+    # Create a mask of 1s for each token followed by 0s for padding
+    for seq in input_ids:
+        seq_mask = [float(i>0) for i in seq]
+        attention_masks.append(seq_mask) 
+
+    prediction_inputs = torch.tensor(input_ids)
+    prediction_masks = torch.tensor(attention_masks)
+ 
+
+    return prediction_inputs, prediction_masks
