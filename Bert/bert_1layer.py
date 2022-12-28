@@ -1,5 +1,5 @@
 
-from utlis import *
+from utils import *
 
 from sklearn.metrics import matthews_corrcoef
 
